@@ -1,5 +1,7 @@
 package com.gae.scaffolder.plugin;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -19,6 +21,7 @@ import com.google.firebase.messaging.RemoteMessage;
  */
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
+    public static final String NOTIFICATION_CHANNEL_ID = "firebase_channel";
     private static final String TAG = "FCMPlugin";
 
     /**
@@ -47,10 +50,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Log.d(TAG, "\tKey: " + key + " Value: " + value);
 				data.put(key, value);
         }
+    
+    if (data.containsKey("title") && data.containsKey("message")) {
+      sendNotification(data.get("title").toString(), data.get("message").toString());
+    }
 		
 		Log.d(TAG, "\tNotification Data: " + data.toString());
         FCMPlugin.sendPushPayload( data );
-        sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody());
     }
     // [END receive_message]
 
@@ -59,24 +65,34 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      *
      * @param messageBody FCM message body received.
      */
-    private void sendNotification(String title, String messageBody, Map<String, Object> data) {
+    private void sendNotification(String title, String messageBody) {
         Intent intent = new Intent(this, FCMPluginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-	
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
+                
+        int resourceId = getResources().getIdentifier("ic_stat_icon", "mipmap", getPackageName());
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(getApplicationInfo().icon)
+                .setSmallIcon(resourceId)
                 .setContentTitle(title)
                 .setContentText(messageBody)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
+                
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      			int importance = NotificationManager.IMPORTANCE_HIGH;
+      			NotificationChannel mChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "Push Notification", importance);
+      			notificationManager.createNotificationChannel(mChannel);
 
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+          notificationBuilder.setChannelId(NOTIFICATION_CHANNEL_ID);
+        }
+
+        
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
     }
