@@ -40,9 +40,9 @@ NSString *const kGCMMessageIDKey = @"gcm.message_id";
 //Method swizzling
 + (void)load
 {
-    //Method original =  class_getInstanceMethod(self, @selector(application:didFinishLaunchingWithOptions:));
-    //Method custom =    class_getInstanceMethod(self, @selector(application:customDidFinishLaunchingWithOptions:));
-    //method_exchangeImplementations(original, custom);
+    Method original =  class_getInstanceMethod(self, @selector(application:didFinishLaunchingWithOptions:));
+    Method custom =    class_getInstanceMethod(self, @selector(application:customDidFinishLaunchingWithOptions:));
+    method_exchangeImplementations(original, custom);
 }
 
 - (BOOL)application:(UIApplication *)application customDidFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -95,7 +95,7 @@ NSString *const kGCMMessageIDKey = @"gcm.message_id";
     }
 
     // [START configure_firebase]
-    [FIRApp configure];
+//     [FIRApp configure];
     // [END configure_firebase]
     // Add observer for InstanceID token refresh callback.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(tokenRefreshNotification:)
